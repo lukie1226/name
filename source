@@ -1,0 +1,82 @@
+-- Path: StarterPlayer > StarterPlayerScripts > FlyScript
+
+local UserInputService = game:GetService("UserInputService")
+local RunService = game:GetService("RunService")
+local player = game.Players.LocalPlayer
+local character = player.Character or player.CharacterAdded:Wait()
+local humanoid = character:WaitForChild("Humanoid")
+local flying = false
+local speed = 50
+
+-- Create a Trail for the flying effect
+local function createTrail()
+    local trail = Instance.new("Trail")
+    trail.Color = ColorSequence.new(Color3.new(0, 0, 1), Color3.new(1, 0, 0)) -- Blue to red
+    trail.Lifetime = 0.5
+    trail.Parent = character.HumanoidRootPart
+    
+    local attachment0 = Instance.new("Attachment", character.HumanoidRootPart)
+    local attachment1 = Instance.new("Attachment", character.HumanoidRootPart)
+    attachment0.Position = Vector3.new(0, 2, 0) -- Adjust position as needed
+    attachment1.Position = Vector3.new(0, -2, 0) -- Adjust position as needed
+    trail.Attachment0 = attachment0
+    trail.Attachment1 = attachment1
+    
+    return trail
+end
+
+local trail = nil
+
+-- Function to start flying
+local function startFlying()
+    humanoid.PlatformStand = true
+    flying = true
+    
+    -- Tilt character forward for the flying pose
+    character.HumanoidRootPart.CFrame = character.HumanoidRootPart.CFrame * CFrame.Angles(-math.rad(30), 0, 0)
+    
+    -- Create and enable trail
+    trail = createTrail()
+    trail.Enabled = true
+end
+
+-- Function to stop flying
+local function stopFlying()
+    humanoid.PlatformStand = false
+    flying = false
+    
+    -- Reset the character tilt
+    character.HumanoidRootPart.CFrame = character.HumanoidRootPart.CFrame * CFrame.Angles(math.rad(30), 0, 0)
+    
+    -- Disable and destroy trail
+    if trail then
+        trail.Enabled = false
+        trail:Destroy()
+        trail = nil
+    end
+end
+
+-- Function to handle flying movement
+local function onRenderStep()
+    if flying then
+        local camera = workspace.CurrentCamera
+        local moveDirection = camera.CFrame.LookVector
+        character.HumanoidRootPart.Velocity = moveDirection * speed
+    end
+end
+
+-- Connect the "F" key press event
+UserInputService.InputBegan:Connect(function(input, gameProcessed)
+    if gameProcessed then return end
+
+    if input.KeyCode == Enum.KeyCode.F then
+        if flying then
+            stopFlying()
+        else
+            startFlying()
+        end
+    end
+end)
+
+-- Connect the rendering step for continuous flying movement
+RunService.RenderStepped:Connect(onRenderStep)
